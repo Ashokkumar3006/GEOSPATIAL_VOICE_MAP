@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Geospatial Map</title>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Geospatial Map</h1>
+    <div id="map"></div>
+    <button onclick="startVoiceRecognition()">Say Command</button>
+
+    <script>
+       
+        const map = L.map('map').setView([45.5236, -122.6750], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        function startVoiceRecognition() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                const command = event.results[0][0].transcript;
+                console.log('Voice command:', command);
+                sendVoiceCommand(command);
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Error occurred in recognition: ', event.error);
+            };
+        }
+
+        function sendVoiceCommand(command) {
+            fetch('/voice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ command: command }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                handleMapAction(data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function handleMapAction(data) {
+            const currentCenter = map.getCenter();
+            const zoomLevel = map.getZoom();
+            switch(data.action) {
+                case 'zoom_in':
+                    map.setZoom(zoomLevel + 1);
+                    break;
+                case 'zoom_out':
+                    map.setZoom(zoomLevel - 1);
+                    break;
+                case 'move_left':
+                    map.panBy([-100, 0]); 
+                    break;
+                case 'move_right':
+                    map.panBy([100, 0]); 
+                    break;
+                case 'move_up':
+                    map.panBy([0, -100]); 
+                    break;
+                case 'move_down':
+                    map.panBy([0, 100]); 
+                    break;
+                case 'navigate':
+                    map.setView([data.lat, data.lon], zoomLevel);
+                    break;
+                default:
+                    console.log('Unrecognized command');
+            }
+        }
+    </script>
+</body>
+</html>
