@@ -6,11 +6,11 @@ python -m venv map
 ## Activate the environment
 # On Windows
 ```
-.\agent\Scripts\activate
+.\map\Scripts\activate
 ```
 # On Linux or MacOS
 ```
-source agent/bin/activate
+source map/bin/activate
 ```
 ## Install the requirements file
 
